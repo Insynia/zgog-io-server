@@ -1,7 +1,9 @@
 [package]
-name = "zgog-io-server"
-version = "0.1.0"
 authors = ["Thibaut Roche <thibaut.roche.perso@gmail.com>"]
 edition = "2018"
-
+name = "zgog-io-server"
+version = "0.1.0"
 [dependencies]
+log = "0.4.6"
+pretty_env_logger = "0.3.0"
+websocket = "0.22.4"
