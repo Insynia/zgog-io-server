@@ -105,3 +105,20 @@ impl Map {
         self
     }
 }
+
+use std::net::TcpStream;
+use websocket::result::WebSocketError;
+use websocket::sender::Writer;
+use websocket::OwnedMessage;
+
+use crate::communication::{OutgoingMessage, OutgoingMessageType};
+
+pub fn send_map(sender: &mut Writer<TcpStream>) -> Result<(), WebSocketError> {
+    sender.send_message(&OwnedMessage::Text(
+        OutgoingMessage {
+            _type: OutgoingMessageType::Map,
+            payload: Some(MAP.clone()),
+        }
+        .into(),
+    ))
+}

@@ -5,65 +5,28 @@ use websocket::sender::Writer;
 use websocket::sync::Server;
 use websocket::OwnedMessage;
 
-use crate::communication::{Message, MessageType};
-use crate::map::MAP;
-use crate::players::{add_player, move_player, PLAYERS};
+use crate::communication::{IncomingMessage, IncomingMessageType};
+use crate::map::send_map;
+use crate::players::{add_player, move_player, send_all_players, send_new_player, send_player};
 
 static SERVER_IP: &str = "0.0.0.0:2794";
 
 fn handle_game_message(id: Uuid, message: &OwnedMessage, sender: &mut Writer<TcpStream>) {
     if let OwnedMessage::Text(str_message) = message {
-        if let Ok(message) = serde_json::from_str::<Message<serde_json::Value>>(str_message) {
+        if let Ok(message) = serde_json::from_str::<IncomingMessage<serde_json::Value>>(str_message)
+        {
             match message._type {
-                MessageType::Map => {
-                    sender
-                        .send_message(&OwnedMessage::Text(
-                            Message {
-                                _type: MessageType::Map,
-                                payload: Some(MAP.clone()),
-                            }
-                            .into(),
-                        ))
-                        .expect("Could not send map");
-                    sender
-                        .send_message(&OwnedMessage::Text(
-                            Message {
-                                _type: MessageType::PlayerCoords,
-                                payload: Some(
-                                    PLAYERS
-                                        .lock()
-                                        .expect("Could not lock players mutex")
-                                        .clone(),
-                                ),
-                            }
-                            .into(),
-                        ))
-                        .expect("Could not send coords");
-                }
-                MessageType::NewPlayer => {
+                IncomingMessageType::Map => send_map(sender).expect("Could not send map"),
+                IncomingMessageType::NewPlayer => {
                     if let Ok(player) = add_player(id, message.payload) {
-                        sender
-                            .send_message(&OwnedMessage::Text(
-                                Message {
-                                    _type: MessageType::NewPlayer,
-                                    payload: Some(player.clone()),
-                                }
-                                .into(),
-                            ))
-                            .expect("Could not send coords");
+                        send_map(sender).expect("Could not send map");
+                        send_new_player(sender, player).expect("Could not send coords");
+                        send_all_players(sender).expect("Could not send coords")
                     }
                 }
-                MessageType::PlayerCoords => {
+                IncomingMessageType::PlayerCoords => {
                     if let Ok(player) = move_player(id, message.payload) {
-                        sender
-                            .send_message(&OwnedMessage::Text(
-                                Message {
-                                    _type: MessageType::NewPlayer,
-                                    payload: Some(player),
-                                }
-                                .into(),
-                            ))
-                            .expect("Could not send coords");
+                        send_player(sender, player).expect("Could not send coords");
                     }
                 }
             }

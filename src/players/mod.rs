@@ -55,3 +55,48 @@ pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Playe
     }
     Err(())
 }
+
+use std::net::TcpStream;
+use websocket::result::WebSocketError;
+use websocket::sender::Writer;
+use websocket::OwnedMessage;
+
+use crate::communication::{OutgoingMessage, OutgoingMessageType};
+
+pub fn send_player(sender: &mut Writer<TcpStream>, player: Player) -> Result<(), WebSocketError> {
+    sender.send_message(&OwnedMessage::Text(
+        OutgoingMessage {
+            _type: OutgoingMessageType::PlayerUpdated,
+            payload: Some(player),
+        }
+        .into(),
+    ))
+}
+
+pub fn send_new_player(
+    sender: &mut Writer<TcpStream>,
+    player: Player,
+) -> Result<(), WebSocketError> {
+    sender.send_message(&OwnedMessage::Text(
+        OutgoingMessage {
+            _type: OutgoingMessageType::NewPlayer,
+            payload: Some(player),
+        }
+        .into(),
+    ))
+}
+
+pub fn send_all_players(sender: &mut Writer<TcpStream>) -> Result<(), WebSocketError> {
+    sender.send_message(&OwnedMessage::Text(
+        OutgoingMessage {
+            _type: OutgoingMessageType::AllPlayers,
+            payload: Some(
+                PLAYERS
+                    .lock()
+                    .expect("Could not lock players mutex")
+                    .clone(),
+            ),
+        }
+        .into(),
+    ))
+}
