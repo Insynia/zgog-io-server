@@ -1,6 +1,7 @@
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Player {
+    pub id: usize,
     pub name: String,
-    pub x: usize,
-    pub y: usize,
+    pub x: f64,
+    pub y: f64,
 }

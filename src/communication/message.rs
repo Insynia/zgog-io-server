@@ -15,7 +15,7 @@ where
 {
     #[serde(rename = "type")]
     pub _type: MessageType,
-    pub payload: T,
+    pub payload: Option<T>,
 }
 
 impl<T> Into<String> for Message<T>
