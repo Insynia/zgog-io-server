@@ -29,6 +29,7 @@ pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player
                 .lock()
                 .expect("Could not lock players mutex")
                 .push(player.clone());
+            info!("New player \"{}\" with id \"{}\"", player.name, player.id);
             return Ok(player);
         }
     }
