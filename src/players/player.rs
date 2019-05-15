@@ -1,9 +1,11 @@
 use uuid::Uuid;
 
+use crate::coordinates::Coords;
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Player {
     pub id: Uuid,
     pub name: String,
-    pub x: f64,
-    pub y: f64,
+    pub coords: Coords,
+    pub velocity: Coords,
 }

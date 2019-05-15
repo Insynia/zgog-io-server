@@ -2,27 +2,24 @@ pub mod player;
 
 pub use player::Player;
 
-use rand::Rng;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 use crate::coordinates::Coords;
-use crate::map::MAP;
 
 lazy_static! {
     pub static ref PLAYERS: Arc<Mutex<Vec<Player>>> = Arc::new(Mutex::new(vec![]));
 }
 
+//TODO: Random coordinates at spawn
 pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player, ()> {
-    let mut random = rand::thread_rng();
-
     if let Some(payload) = payload {
         if let Some(name) = payload["name"].as_str() {
             let player = Player {
                 id,
                 name: name.to_owned(),
-                x: (random.gen::<usize>() % MAP.width) as f64,
-                y: (random.gen::<usize>() % MAP.width) as f64,
+                coords: Coords { x: 0.0, y: 0.0 },
+                velocity: Coords { x: 0.0, y: 0.0 },
             };
 
             PLAYERS
@@ -47,8 +44,8 @@ pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Playe
                 .collect::<Vec<_>>()
                 .first_mut()
             {
-                player.x = coords.x;
-                player.y = coords.y;
+                player.coords.x = coords.x;
+                player.coords.y = coords.y;
 
                 return Ok(player.clone());
             }
