@@ -4,6 +4,7 @@ use noise::Seedable;
 use rand::Rng;
 use std::collections::HashMap;
 
+use crate::coordinates::Coords;
 use crate::map::tiles::{Tile, TileType};
 
 lazy_static! {
@@ -103,6 +104,37 @@ impl Map {
         // }
 
         self
+    }
+}
+
+fn base_tile_for_coords(x: usize, y: usize) -> Tile {
+    MAP.content
+        .get(&format!("{};{}", x, y))
+        .expect("Tile not found")
+        .iter()
+        .filter(|t| t.index == 0)
+        .collect::<Vec<&Tile>>()[0]
+        .clone()
+}
+
+pub fn valid_spawn() -> Coords {
+    let mut random = rand::thread_rng();
+    let (mut x, mut y) = (
+        random.gen::<usize>() % MAP.width,
+        random.gen::<usize>() % MAP.height,
+    );
+    let mut base_tile = base_tile_for_coords(x, y);
+
+    while base_tile.tile_type == TileType::Water {
+        x = random.gen::<usize>() % MAP.width;
+        y = random.gen::<usize>() % MAP.height;
+
+        base_tile = base_tile_for_coords(x, y);
+    }
+
+    Coords {
+        x: x as f64,
+        y: y as f64,
     }
 }
 

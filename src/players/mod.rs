@@ -6,19 +6,19 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 use crate::coordinates::Coords;
+use crate::map::valid_spawn;
 
 lazy_static! {
     pub static ref PLAYERS: Arc<Mutex<Vec<Player>>> = Arc::new(Mutex::new(vec![]));
 }
 
-//TODO: Random coordinates at spawn
 pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player, ()> {
     if let Some(payload) = payload {
         if let Some(name) = payload["name"].as_str() {
             let player = Player {
                 id,
                 name: name.to_owned(),
-                position: Coords { x: 0.0, y: 0.0 },
+                position: valid_spawn(),
                 orientation: Coords { x: 0.0, y: 0.0 },
                 velocity: Coords { x: 0.0, y: 0.0 },
             };
