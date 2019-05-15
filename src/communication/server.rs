@@ -1,32 +1,39 @@
-use std::net::{SocketAddr, TcpStream};
+use std::net::SocketAddr;
 use std::thread;
 use uuid::Uuid;
-use websocket::sender::Writer;
 use websocket::sync::Server;
 use websocket::OwnedMessage;
 
-use crate::communication::{IncomingMessage, IncomingMessageType};
+use crate::communication::client::{send_all_clients, with_client_id, Client, Socket, CLIENTS};
+use crate::communication::{IncomingMessage, IncomingMessageType, OutgoingMessageType};
 use crate::map::send_map;
 use crate::players::{add_player, move_player, send_all_players, send_new_player, send_player};
 
 static SERVER_IP: &str = "0.0.0.0:2794";
 
-fn handle_game_message(id: Uuid, message: &OwnedMessage, sender: &mut Writer<TcpStream>) {
+fn handle_game_message(id: Uuid, message: &OwnedMessage) {
     if let OwnedMessage::Text(str_message) = message {
         if let Ok(message) = serde_json::from_str::<IncomingMessage<serde_json::Value>>(str_message)
         {
             match message._type {
-                IncomingMessageType::Map => send_map(sender).expect("Could not send map"),
+                IncomingMessageType::Map => with_client_id(id, &|s: &mut Socket| {
+                    send_map(s).expect("Could not send map")
+                }),
                 IncomingMessageType::NewPlayer => {
                     if let Ok(player) = add_player(id, message.payload) {
-                        send_map(sender).expect("Could not send map");
-                        send_new_player(sender, player).expect("Could not send coords");
-                        send_all_players(sender).expect("Could not send coords")
+                        with_client_id(id, &|s: &mut Socket| {
+                            send_map(s).expect("Could not send map");
+                            send_new_player(s, player.clone()).expect("Could not send coords");
+                            send_all_players(s).expect("Could not send coords")
+                        })
                     }
                 }
                 IncomingMessageType::PlayerCoords => {
                     if let Ok(player) = move_player(id, message.payload) {
-                        send_player(sender, player).expect("Could not send coords");
+                        with_client_id(id, &|s: &mut Socket| {
+                            send_player(s, player.clone()).expect("Could not send coords");
+                        });
+                        send_all_clients(OutgoingMessageType::PlayerUpdated, Some(player));
                     }
                 }
             }
@@ -34,21 +41,23 @@ fn handle_game_message(id: Uuid, message: &OwnedMessage, sender: &mut Writer<Tcp
     }
 }
 
-fn handle_message(id: Uuid, message: OwnedMessage, sender: &mut Writer<TcpStream>, ip: SocketAddr) {
+fn handle_message(id: Uuid, message: OwnedMessage, ip: SocketAddr) {
     match message {
         OwnedMessage::Close(_) => {
-            sender
-                .send_message(&OwnedMessage::Close(None))
-                .expect("Could not send close message");
+            with_client_id(id, &|s: &mut Socket| {
+                s.send_message(&OwnedMessage::Close(None))
+                    .expect("Could not send close message")
+            });
             info!("Client {} disconnected", ip);
             return;
         }
         OwnedMessage::Ping(ping) => {
-            sender
-                .send_message(&OwnedMessage::Pong(ping))
-                .expect("Could not send pong message");
+            with_client_id(id, &|s: &mut Socket| {
+                s.send_message(&OwnedMessage::Pong(ping.clone()))
+                    .expect("Could not send pong message")
+            });
         }
-        _ => handle_game_message(id, &message, sender),
+        _ => handle_game_message(id, &message),
     }
 }
 
@@ -64,14 +73,19 @@ pub fn launch_server() {
 
             info!("Connection from {}", ip);
 
-            let (mut receiver, mut sender) = client.split().expect("Could not split client");
+            let (mut receiver, sender) = client.split().expect("Could not split client");
             let id = Uuid::new_v4();
+
+            CLIENTS
+                .lock()
+                .expect("Could not lock clients mutex")
+                .push(Client { id, sender });
 
             for message in receiver.incoming_messages() {
                 let message = message.expect("Could not get incoming message");
 
                 debug!("Received message: {:?}", message);
-                handle_message(id, message, &mut sender, ip);
+                handle_message(id, message, ip);
             }
         });
     }
