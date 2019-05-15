@@ -12,6 +12,7 @@ pub enum IncomingMessageType {
 #[serde(rename_all = "snake_case")]
 pub enum OutgoingMessageType {
     Map,
+    Hero,
     NewPlayer,
     AllPlayers,
     PlayerUpdated,

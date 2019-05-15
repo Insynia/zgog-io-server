@@ -18,6 +18,20 @@ pub struct Client {
     pub sender: Writer<TcpStream>,
 }
 
+pub fn add_client(id: Uuid, sender: Socket) {
+    CLIENTS
+        .lock()
+        .expect("Could not lock clients mutex")
+        .push(Client { id, sender });
+}
+
+pub fn remove_client(id: Uuid) {
+    CLIENTS
+        .lock()
+        .expect("Could not lock clients mutex")
+        .retain(|c| c.id != id);
+}
+
 pub fn with_client_id(id: Uuid, cb: &Fn(&mut Writer<TcpStream>)) {
     if let Some(client) = CLIENTS
         .lock()
@@ -51,6 +65,6 @@ where
         client
             .sender
             .send_message(&OwnedMessage::Text(message.clone()))
-            .expect("Could not send close message")
+            .expect("Could not send position to player {}")
     }
 }

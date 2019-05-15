@@ -6,6 +6,14 @@ use crate::coordinates::Coords;
 pub struct Player {
     pub id: Uuid,
     pub name: String,
-    pub coords: Coords,
+    pub position: Coords,
+    pub orientation: Coords,
+    pub velocity: Coords,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PlayerCoords {
+    pub position: Coords,
+    pub orientation: Coords,
     pub velocity: Coords,
 }

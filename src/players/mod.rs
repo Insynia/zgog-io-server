@@ -1,6 +1,6 @@
 pub mod player;
 
-pub use player::Player;
+pub use player::{Player, PlayerCoords};
 
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -18,7 +18,8 @@ pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player
             let player = Player {
                 id,
                 name: name.to_owned(),
-                coords: Coords { x: 0.0, y: 0.0 },
+                position: Coords { x: 0.0, y: 0.0 },
+                orientation: Coords { x: 0.0, y: 0.0 },
                 velocity: Coords { x: 0.0, y: 0.0 },
             };
 
@@ -35,7 +36,7 @@ pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player
 
 pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player, ()> {
     if let Some(payload) = payload {
-        if let Ok(coords) = serde_json::from_value::<Coords>(payload) {
+        if let Ok(coords) = serde_json::from_value::<PlayerCoords>(payload) {
             if let Some(ref mut player) = PLAYERS
                 .lock()
                 .expect("Could not lock players mutex")
@@ -44,11 +45,17 @@ pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Playe
                 .collect::<Vec<_>>()
                 .first_mut()
             {
-                player.coords.x = coords.x;
-                player.coords.y = coords.y;
+                player.position.x = coords.position.x;
+                player.position.y = coords.position.y;
+                player.orientation.x = coords.orientation.x;
+                player.orientation.y = coords.orientation.y;
+                player.velocity.x = coords.velocity.x;
+                player.velocity.y = coords.velocity.y;
 
                 return Ok(player.clone());
             }
+        } else {
+            warn!("Could not deserialize coords for move_player");
         }
     }
     Err(())
@@ -61,23 +68,10 @@ use websocket::OwnedMessage;
 
 use crate::communication::{OutgoingMessage, OutgoingMessageType};
 
-pub fn send_player(sender: &mut Writer<TcpStream>, player: Player) -> Result<(), WebSocketError> {
+pub fn send_hero(sender: &mut Writer<TcpStream>, player: Player) -> Result<(), WebSocketError> {
     sender.send_message(&OwnedMessage::Text(
         OutgoingMessage {
-            _type: OutgoingMessageType::PlayerUpdated,
-            payload: Some(player),
-        }
-        .into(),
-    ))
-}
-
-pub fn send_new_player(
-    sender: &mut Writer<TcpStream>,
-    player: Player,
-) -> Result<(), WebSocketError> {
-    sender.send_message(&OwnedMessage::Text(
-        OutgoingMessage {
-            _type: OutgoingMessageType::NewPlayer,
+            _type: OutgoingMessageType::Hero,
             payload: Some(player),
         }
         .into(),
