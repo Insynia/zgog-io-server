@@ -13,7 +13,7 @@ pub struct Tile {
     pub x: usize,
     pub y: usize,
     #[serde(rename = "type")]
-    pub tile_type: TileType,
+    pub _type: TileType,
     pub index: usize, //TODO: Needed ?
     pub walkable: bool,
 }

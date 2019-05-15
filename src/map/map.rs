@@ -46,7 +46,7 @@ pub fn generate_map(width: usize, height: usize) -> Map {
             content.push(Tile {
                 x,
                 y,
-                tile_type,
+                _type: tile_type,
                 index: 0,
                 walkable,
             });
@@ -54,7 +54,7 @@ pub fn generate_map(width: usize, height: usize) -> Map {
                 content.push(Tile {
                     x: x as usize,
                     y: y as usize,
-                    tile_type: match random.gen::<usize>() % 3 {
+                    _type: match random.gen::<usize>() % 3 {
                         0 => TileType::Rock,
                         _ => TileType::Tree,
                     },
@@ -69,14 +69,20 @@ pub fn generate_map(width: usize, height: usize) -> Map {
     map
 }
 
-fn base_tile_for_coords(x: usize, y: usize) -> Tile {
-    MAP.content
+fn is_walkable(x: usize, y: usize) -> bool {
+    let mut walkable = true;
+    let tile = MAP
+        .content
         .get(&format!("{};{}", x, y))
-        .expect("Tile not found")
-        .iter()
-        .filter(|t| t.index == 0)
-        .collect::<Vec<&Tile>>()[0]
-        .clone()
+        .expect("Tile not found");
+
+    for sub_tile in tile {
+        if !sub_tile.walkable {
+            walkable = false;
+        }
+    }
+
+    walkable
 }
 
 pub fn valid_spawn() -> Coords {
@@ -85,13 +91,10 @@ pub fn valid_spawn() -> Coords {
         random.gen::<usize>() % MAP.width,
         random.gen::<usize>() % MAP.height,
     );
-    let mut base_tile = base_tile_for_coords(x, y);
 
-    while base_tile.tile_type == TileType::Water {
+    while !is_walkable(x, y) {
         x = random.gen::<usize>() % MAP.width;
         y = random.gen::<usize>() % MAP.height;
-
-        base_tile = base_tile_for_coords(x, y);
     }
 
     Coords {
