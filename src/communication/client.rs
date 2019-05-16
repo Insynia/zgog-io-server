@@ -8,16 +8,22 @@ use websocket::OwnedMessage;
 use crate::communication::{OutgoingMessage, OutgoingMessageType};
 
 lazy_static! {
+    /// Contains all the clients that are currently connected to the server.
     pub static ref CLIENTS: Arc<Mutex<Vec<Client>>> = Arc::new(Mutex::new(vec![]));
 }
 
+/// An alias to `Writer<TcpStream>`.
 pub type Socket = Writer<TcpStream>;
 
+/// Represents a client connected to the server.
 pub struct Client {
+    /// Unique id that identify the client.
     pub id: Uuid,
+    /// Socket used to write messages to the client.
     pub sender: Writer<TcpStream>,
 }
 
+/// Add a client to the clients list.
 pub fn add_client(id: Uuid, sender: Socket) {
     CLIENTS
         .lock()
@@ -25,6 +31,7 @@ pub fn add_client(id: Uuid, sender: Socket) {
         .push(Client { id, sender });
 }
 
+/// Remove a client from the clients list.
 pub fn remove_client(id: Uuid) {
     CLIENTS
         .lock()
@@ -32,6 +39,17 @@ pub fn remove_client(id: Uuid) {
         .retain(|c| c.id != id);
 }
 
+/// Allows to acess the client's writing socket in a closure. It allows
+/// to send messages to a specific client from it's id.
+///
+///
+/// Example:
+///
+/// ```
+/// with_client_id(id, &|s: &mut Socket| {
+///     s.send_message(&OwnedMessage::Text("Hello"))
+/// });
+/// ```
 pub fn with_client_id(id: Uuid, cb: &Fn(&mut Writer<TcpStream>)) {
     if let Some(client) = CLIENTS
         .lock()
@@ -47,6 +65,7 @@ pub fn with_client_id(id: Uuid, cb: &Fn(&mut Writer<TcpStream>)) {
     }
 }
 
+/// Sends a message to all the clients. The message is built from the provided parameters.
 pub fn send_all_clients<T>(message_type: OutgoingMessageType, payload: Option<T>)
 where
     T: Serialize,

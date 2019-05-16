@@ -1,3 +1,5 @@
+//! Server for zgog-io game.
+
 #![feature(custom_attribute)]
 
 #[macro_use]
@@ -9,10 +11,10 @@ extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
 
-mod communication;
-mod coordinates;
-mod map;
-mod players;
+pub mod communication;
+pub mod coordinates;
+pub mod map;
+pub mod players;
 
 use crate::communication::launch_server;
 

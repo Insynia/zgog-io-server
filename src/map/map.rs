@@ -11,6 +11,11 @@ lazy_static! {
     pub static ref MAP: Map = generate_map(30, 30);
 }
 
+/// A map. The `width` and `height` fields represent the size of the map
+/// and the content is a [HashMap](HashMap) containing all the squares.
+/// Each square of the map is accessible through the key `x;y`, `x` and
+/// `y` being the coordinates of the tile. The value is then a vector of
+/// [Tile](Tile) which represent each element present on the square.
 #[derive(Debug, Serialize, Clone)]
 pub struct Map {
     pub width: usize,
@@ -18,6 +23,7 @@ pub struct Map {
     content: HashMap<String, Vec<Tile>>,
 }
 
+/// Generate a map of a size provided in parameters.
 pub fn generate_map(width: usize, height: usize) -> Map {
     let mut map = Map {
         width,
@@ -69,6 +75,9 @@ pub fn generate_map(width: usize, height: usize) -> Map {
     map
 }
 
+/// Either a tile is walkable or not. It loops through
+/// all the subtiles of a Tile to check if one is not walkable.
+/// If so, the whole tile won't be.
 fn is_walkable(x: usize, y: usize) -> bool {
     let mut walkable = true;
     let tile = MAP
@@ -85,6 +94,7 @@ fn is_walkable(x: usize, y: usize) -> bool {
     walkable
 }
 
+/// Returns valid coordinates to spawn a player (walkable tile).
 pub fn valid_spawn() -> Coords {
     let mut random = rand::thread_rng();
     let (mut x, mut y) = (
@@ -110,6 +120,7 @@ use websocket::OwnedMessage;
 
 use crate::communication::{OutgoingMessage, OutgoingMessageType};
 
+/// Sends the map to a client.
 pub fn send_map(sender: &mut Writer<TcpStream>) -> Result<(), WebSocketError> {
     sender.send_message(&OwnedMessage::Text(
         OutgoingMessage {

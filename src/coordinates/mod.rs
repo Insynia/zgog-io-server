@@ -1,3 +1,4 @@
+/// Represents 2D coordinates.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Coords {
     pub x: f64,

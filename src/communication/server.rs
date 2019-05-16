@@ -58,6 +58,7 @@ fn handle_message(id: Uuid, message: OwnedMessage) {
     }
 }
 
+/// Launches the game server.
 pub fn launch_server() {
     let server = Server::bind(SERVER_IP).expect("Could not bind server");
 

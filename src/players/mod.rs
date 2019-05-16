@@ -1,6 +1,6 @@
 pub mod player;
 
-pub use player::{Player, PlayerCoords};
+pub use player::{NewPlayerInfos, Player, PlayerCoords};
 
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -14,10 +14,10 @@ lazy_static! {
 
 pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player, ()> {
     if let Some(payload) = payload {
-        if let Some(name) = payload["name"].as_str() {
+        if let Ok(player) = serde_json::from_value::<NewPlayerInfos>(payload) {
             let player = Player {
                 id,
-                name: name.to_owned(),
+                name: player.name.to_owned(),
                 position: valid_spawn(),
                 orientation: Coords { x: 0.0, y: 0.0 },
                 velocity: Coords { x: 0.0, y: 0.0 },
