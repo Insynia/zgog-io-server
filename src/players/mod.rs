@@ -2,17 +2,17 @@ pub mod player;
 
 pub use player::{NewPlayerInfos, Player, PlayerCoords};
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use uuid::Uuid;
 
 use crate::coordinates::Coords;
 use crate::map::valid_spawn;
 
 lazy_static! {
-    pub static ref PLAYERS: Arc<Mutex<Vec<Player>>> = Arc::new(Mutex::new(vec![]));
+    pub static ref PLAYERS: Arc<RwLock<Vec<Player>>> = Arc::new(RwLock::new(vec![]));
 }
 
-pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player, ()> {
+pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player, String> {
     if let Some(payload) = payload {
         if let Ok(player) = serde_json::from_value::<NewPlayerInfos>(payload) {
             let player = Player {
@@ -24,21 +24,32 @@ pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player
             };
 
             PLAYERS
-                .lock()
+                .write()
                 .expect("Could not lock players mutex")
                 .push(player.clone());
             info!("New player \"{}\" with id \"{}\"", player.name, player.id);
             return Ok(player);
+        } else {
+            Err("Could not deserialize player infos for add_player".to_owned())
         }
+    } else {
+        Err("No payload provided for add_player".to_owned())
     }
-    Err(())
 }
 
-pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player, ()> {
+pub fn remove_player(id: Uuid) {
+    PLAYERS
+        .write()
+        .expect("Could not lock players mutex")
+        .retain(|c| c.id != id);
+    info!("Player with id \"{}\" removed", id);
+}
+
+pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<(), String> {
     if let Some(payload) = payload {
         if let Ok(coords) = serde_json::from_value::<PlayerCoords>(payload) {
             if let Some(ref mut player) = PLAYERS
-                .lock()
+                .write()
                 .expect("Could not lock players mutex")
                 .iter_mut()
                 .filter(|p| p.id == id)
@@ -52,13 +63,16 @@ pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Playe
                 player.velocity.x = coords.velocity.x;
                 player.velocity.y = coords.velocity.y;
 
-                return Ok(player.clone());
+                Ok(())
+            } else {
+                Err("Player not found for move_player".to_owned())
             }
         } else {
-            warn!("Could not deserialize coords for move_player");
+            Err("Could not deserialize coords for move_player".to_owned())
         }
+    } else {
+        Err("No payload provided for move_player".to_owned())
     }
-    Err(())
 }
 
 use std::net::TcpStream;
@@ -84,7 +98,7 @@ pub fn send_all_players(sender: &mut Writer<TcpStream>) -> Result<(), WebSocketE
             _type: OutgoingMessageType::AllPlayers,
             payload: Some(
                 PLAYERS
-                    .lock()
+                    .read()
                     .expect("Could not lock players mutex")
                     .clone(),
             ),

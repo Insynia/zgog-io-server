@@ -1,7 +1,8 @@
 use serde::Serialize;
 use std::net::TcpStream;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use uuid::Uuid;
+use websocket::result::WebSocketError;
 use websocket::sender::Writer;
 use websocket::OwnedMessage;
 
@@ -9,7 +10,7 @@ use crate::communication::{OutgoingMessage, OutgoingMessageType};
 
 lazy_static! {
     /// Contains all the clients that are currently connected to the server.
-    pub static ref CLIENTS: Arc<Mutex<Vec<Client>>> = Arc::new(Mutex::new(vec![]));
+    pub static ref CLIENTS: Arc<RwLock<Vec<Client>>> = Arc::new(RwLock::new(vec![]));
 }
 
 /// An alias to `Writer<TcpStream>`.
@@ -25,18 +26,22 @@ pub struct Client {
 
 /// Add a client to the clients list.
 pub fn add_client(id: Uuid, sender: Socket) {
+    warn!("before add client");
     CLIENTS
-        .lock()
+        .write()
         .expect("Could not lock clients mutex")
         .push(Client { id, sender });
+    info!("Client {} added", id);
+    warn!("after add client");
 }
 
 /// Remove a client from the clients list.
 pub fn remove_client(id: Uuid) {
     CLIENTS
-        .lock()
+        .write()
         .expect("Could not lock clients mutex")
         .retain(|c| c.id != id);
+    info!("Client {} removed", id);
 }
 
 /// Allows to acess the client's writing socket in a closure. It allows
@@ -50,18 +55,24 @@ pub fn remove_client(id: Uuid) {
 ///     s.send_message(&OwnedMessage::Text("Hello"))
 /// });
 /// ```
-pub fn with_client_id(id: Uuid, cb: &Fn(&mut Writer<TcpStream>)) {
+pub fn with_client_id(
+    id: Uuid,
+    cb: &Fn(&mut Writer<TcpStream>) -> Result<(), WebSocketError>,
+) -> Result<(), String> {
     if let Some(client) = CLIENTS
-        .lock()
+        .write()
         .expect("Could not lock clients mutex")
         .iter_mut()
         .filter(|c| c.id == id)
         .collect::<Vec<_>>()
         .first_mut()
     {
-        cb(&mut client.sender);
+        match cb(&mut client.sender) {
+            Err(err) => Err(err.to_string()),
+            _ => Ok(()),
+        }
     } else {
-        error!("Client not found");
+        Err("Client not found".to_owned())
     }
 }
 
@@ -70,20 +81,24 @@ pub fn send_all_clients<T>(message_type: OutgoingMessageType, payload: Option<T>
 where
     T: Serialize,
 {
+    use retain_mut::RetainMut;
+
     let message: String = OutgoingMessage {
         _type: message_type,
         payload,
     }
     .into();
 
-    for client in CLIENTS
-        .lock()
+    CLIENTS
+        .write()
         .expect("Could not lock clients mutex")
-        .iter_mut()
-    {
-        client
-            .sender
-            .send_message(&OwnedMessage::Text(message.clone()))
-            .expect("Could not send position to player {}")
-    }
+        .retain_mut(
+            |c| match c.sender.send_message(&OwnedMessage::Text(message.clone())) {
+                Err(err) => {
+                    error!("Could not send position to player: {}", err);
+                    false
+                }
+                _ => true,
+            },
+        );
 }

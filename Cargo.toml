@@ -17,3 +17,5 @@ serde_repr = "0.1.4"
 lazy_static = "1.3.0"
 dotenv = "0.14.0"
 uuid = { version = "0.7.4", features = ["v4", "serde"] }
+crossbeam-channel = "0.3.8"
+retain_mut = "0.1.0"

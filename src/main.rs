@@ -10,6 +10,8 @@ extern crate serde_repr;
 extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate chan;
 
 pub mod communication;
 pub mod coordinates;
