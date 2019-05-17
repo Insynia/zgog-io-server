@@ -1,6 +1,5 @@
 use std::thread;
 use uuid::Uuid;
-use websocket::result::WebSocketError;
 use websocket::sync::Server;
 use websocket::OwnedMessage;
 
@@ -9,9 +8,7 @@ use crate::communication::client::{
 };
 use crate::communication::{IncomingMessage, IncomingMessageType, OutgoingMessageType};
 use crate::map::send_map;
-use crate::players::{
-    add_player, move_player, remove_player, send_all_players, send_hero, PLAYERS,
-};
+use crate::player::{add_player, move_player, remove_player, send_all_players, send_hero, PLAYERS};
 
 static SERVER_IP: &str = "0.0.0.0:2794";
 

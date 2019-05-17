@@ -5,6 +5,7 @@ use rand::Rng;
 use std::collections::HashMap;
 
 use crate::coordinates::Coords;
+use crate::map::map_object::{MapObject, MapObjectType};
 use crate::map::tiles::{Tile, TileType};
 
 lazy_static! {
@@ -20,7 +21,7 @@ lazy_static! {
 pub struct Map {
     pub width: usize,
     pub height: usize,
-    content: HashMap<String, Vec<Tile>>,
+    content: HashMap<String, Tile>,
 }
 
 /// Generate a map of a size provided in parameters.
@@ -47,28 +48,23 @@ pub fn generate_map(width: usize, height: usize) -> Map {
                 10...15 => TileType::Grass,
                 _ => TileType::Grass,
             };
-            let walkable = tile_type.is_walkable();
-
-            content.push(Tile {
+            let walkable = tile_type.walkable();
+            let tile = Tile {
                 x,
                 y,
                 _type: tile_type,
-                index: 0,
-                walkable,
-            });
+                content: vec![],
+            };
+
             if walkable && random.gen::<usize>() % 30 == 0 {
-                content.push(Tile {
-                    x: x as usize,
-                    y: y as usize,
+                tile.content.push(MapObject {
                     _type: match random.gen::<usize>() % 3 {
-                        0 => TileType::Rock,
-                        _ => TileType::Tree,
+                        0 => MapObjectType::Rock,
+                        _ => MapObjectType::Tree,
                     },
-                    index: 0,
-                    walkable: false,
                 });
             }
-            map.content.insert(key, content);
+            map.content.insert(key, tile);
         }
     }
 
@@ -85,13 +81,7 @@ fn is_walkable(x: usize, y: usize) -> bool {
         .get(&format!("{};{}", x, y))
         .expect("Tile not found");
 
-    for sub_tile in tile {
-        if !sub_tile.walkable {
-            walkable = false;
-        }
-    }
-
-    walkable
+    tile.walkable()
 }
 
 /// Returns valid coordinates to spawn a player (walkable tile).
