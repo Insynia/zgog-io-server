@@ -26,22 +26,18 @@ pub struct Client {
 
 /// Add a client to the clients list.
 pub fn add_client(id: Uuid, sender: Socket) {
-    warn!("before add client");
-    CLIENTS
-        .write()
-        .expect("Could not lock clients mutex")
-        .push(Client { id, sender });
-    info!("Client {} added", id);
-    warn!("after add client");
+    let mut c = CLIENTS.write().expect("Could not lock clients mutex");
+    c.push(Client { id, sender });
+    let nb_clients = c.len();
+    info!("[# = {}] Client {} added", nb_clients, id);
 }
 
 /// Remove a client from the clients list.
 pub fn remove_client(id: Uuid) {
-    CLIENTS
-        .write()
-        .expect("Could not lock clients mutex")
-        .retain(|c| c.id != id);
-    info!("Client {} removed", id);
+    let mut c = CLIENTS.write().expect("Could not lock clients mutex");
+    c.retain(|c| c.id != id);
+    let nb_clients = c.len();
+    info!("[# = {}] Client {} removed", nb_clients, id);
 }
 
 /// Allows to acess the client's writing socket in a closure. It allows
