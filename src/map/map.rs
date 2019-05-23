@@ -12,6 +12,10 @@ lazy_static! {
     pub static ref MAP: Map = generate_map(30, 30);
 }
 
+/// Represents the spacing between map objects. Around one object
+/// every `MAP_OBJECTS_SPACING` tile (random distribution).
+static MAP_OBJECTS_SPACING: usize = 30;
+
 /// A map. The `width` and `height` fields represent the size of the map
 /// and the content is a [HashMap](HashMap) containing all the squares.
 /// Each square of the map is accessible through the key `x;y`, `x` and
@@ -55,12 +59,13 @@ pub fn generate_map(width: usize, height: usize) -> Map {
                 content: vec![],
             };
 
-            if walkable && random.gen::<usize>() % 30 == 0 {
+            if walkable && random.gen_range(0, MAP_OBJECTS_SPACING) == 0 {
                 tile.content.push(MapObject {
-                    _type: match random.gen::<usize>() % 3 {
+                    _type: match random.gen_range(1, 3 + 1) {
                         0 => MapObjectType::Rock,
                         _ => MapObjectType::Tree,
                     },
+                    size: random.gen_range(1, 5 + 1),
                 });
             }
             map.content.insert(key, tile);
