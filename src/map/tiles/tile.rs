@@ -19,7 +19,8 @@ pub struct Tile {
     #[serde(rename = "type")]
     /// The tile type.
     pub _type: TileType,
-    pub content: Vec<MapObject>,
+    pub objects: Vec<MapObject>,
+    pub visuals: Vec<()>,
 }
 
 impl Tile {

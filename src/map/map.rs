@@ -58,11 +58,12 @@ pub fn generate_map(width: usize, height: usize) -> Map {
                 x,
                 y,
                 _type: tile_type,
-                content: vec![],
+                objects: vec![],
+                visuals: vec![],
             };
 
             if walkable && random.gen_range(0, MAP_OBJECTS_SPACING) == 0 {
-                tile.content.push(MapObject {
+                tile.objects.push(MapObject {
                     _type: match random.gen_range(1, 3 + 1) {
                         0 => MapObjectType::Rock,
                         _ => MapObjectType::Tree,
