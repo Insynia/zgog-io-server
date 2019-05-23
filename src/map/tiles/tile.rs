@@ -1,3 +1,5 @@
+use crate::map::map_object::MapObject;
+
 /// Identify the type of a [Tile](Tile).
 #[derive(Debug, Clone, Serialize_repr, PartialEq)]
 #[repr(u8)]
@@ -5,8 +7,6 @@ pub enum TileType {
     Water,
     Sand,
     Grass,
-    Tree,
-    Rock,
 }
 
 /// Represent a game tile.
@@ -19,15 +19,17 @@ pub struct Tile {
     #[serde(rename = "type")]
     /// The tile type.
     pub _type: TileType,
-    /// Used to set the z-order of the tiles with same coordinates.
-    /// A tile with the index 0 is below a tile with the index 1.
-    pub index: usize,
-    /// Either you can walk on the tile or not.
-    pub walkable: bool,
+    pub content: Vec<MapObject>,
+}
+
+impl Tile {
+    pub fn walkable(&self) -> bool {
+        self._type.walkable()
+    }
 }
 
 impl TileType {
-    pub fn is_walkable(&self) -> bool {
+    pub fn walkable(&self) -> bool {
         if self == &TileType::Water {
             return false;
         }

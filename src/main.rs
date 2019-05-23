@@ -14,7 +14,7 @@ extern crate lazy_static;
 pub mod communication;
 pub mod coordinates;
 pub mod map;
-pub mod players;
+pub mod player;
 
 use crate::communication::launch_server;
 

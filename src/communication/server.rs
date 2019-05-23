@@ -1,6 +1,5 @@
 use std::thread;
 use uuid::Uuid;
-use websocket::result::WebSocketError;
 use websocket::sync::Server;
 use websocket::OwnedMessage;
 
@@ -9,9 +8,7 @@ use crate::communication::client::{
 };
 use crate::communication::{IncomingMessage, IncomingMessageType, OutgoingMessageType};
 use crate::map::send_map;
-use crate::players::{
-    add_player, move_player, remove_player, send_all_players, send_hero, PLAYERS,
-};
+use crate::player::{add_player, move_player, remove_player, send_all_players, send_hero, PLAYERS};
 
 static SERVER_IP: &str = "0.0.0.0:2794";
 
@@ -43,16 +40,25 @@ fn handle_game_message(id: Uuid, message: &OwnedMessage) -> Result<(), String> {
     Ok(())
 }
 
-fn handle_message(id: Uuid, message: OwnedMessage) {
+fn handle_message(id: Uuid, message: OwnedMessage) -> bool {
     match message {
         OwnedMessage::Close(_) => {
+            with_client_id(id, &|s: &mut Socket| {
+                s.send_message(&OwnedMessage::Close(None))
+                    .expect("Could not send close message");
+                Ok(())
+            })
+            .unwrap();
+
             remove_player(id);
             remove_client(id);
+            false
         }
         _ => {
             if let Err(err) = handle_game_message(id, &message) {
                 error!("Error handling game message: {}", err);
             }
+            true
         }
     }
 }
@@ -97,9 +103,12 @@ pub fn launch_server() {
 
             add_client(id, sender);
 
-            for message in receiver.incoming_messages().filter_map(Result::ok) {
+            for message in receiver.incoming_messages() {
                 debug!("Received message: {:?}", message);
-                handle_message(id, message);
+
+                if !handle_message(id, message.expect("Message caca")) {
+                    break;
+                }
             }
         });
     }
