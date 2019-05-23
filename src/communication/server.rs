@@ -105,9 +105,13 @@ pub fn launch_server() {
 
             for message in receiver.incoming_messages() {
                 debug!("Received message: {:?}", message);
-
-                if !handle_message(id, message.expect("Message caca")) {
-                    break;
+                match message {
+                    Ok(msg) => {
+                        if !handle_message(id, msg) {
+                            break;
+                        }
+                    }
+                    Err(_) => break,
                 }
             }
         });

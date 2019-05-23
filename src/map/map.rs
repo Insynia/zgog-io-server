@@ -1,3 +1,4 @@
+use log::debug;
 use noise::NoiseFn;
 use noise::OpenSimplex;
 use noise::Seedable;
@@ -30,6 +31,7 @@ pub struct Map {
 
 /// Generate a map of a size provided in parameters.
 pub fn generate_map(width: usize, height: usize) -> Map {
+    debug!("Generating map of size: {}", height);
     let mut map = Map {
         width,
         height,
@@ -100,6 +102,8 @@ pub fn valid_spawn() -> Coords {
         y = random.gen::<usize>() % MAP.height;
     }
 
+    debug!("Found a valid spawn at: {}/{}", x, y);
+
     Coords {
         x: x as f64,
         y: y as f64,
@@ -115,6 +119,7 @@ use crate::communication::{OutgoingMessage, OutgoingMessageType};
 
 /// Sends the map to a client.
 pub fn send_map(sender: &mut Writer<TcpStream>) -> Result<(), WebSocketError> {
+    debug!("Map sent");
     sender.send_message(&OwnedMessage::Text(
         OutgoingMessage {
             _type: OutgoingMessageType::Map,
