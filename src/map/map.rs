@@ -119,7 +119,7 @@ use crate::communication::{OutgoingMessage, OutgoingMessageType};
 
 /// Sends the map to a client.
 pub fn send_map(sender: &mut Writer<TcpStream>) -> Result<(), WebSocketError> {
-    debug!("Map sent");
+    debug!("Sending map...");
     sender.send_message(&OwnedMessage::Text(
         OutgoingMessage {
             _type: OutgoingMessageType::Map,
