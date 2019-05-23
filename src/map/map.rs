@@ -41,7 +41,6 @@ pub fn generate_map(width: usize, height: usize) -> Map {
             let depth: u32 =
                 ((noise_generator.get([x as f64 / 20.0, y as f64 / 20.0]) + 1.0) * 10.0) as u32;
             let key = format!("{};{}", x, y);
-            let mut content = vec![];
             let tile_type = match depth {
                 5...9 => TileType::Water,
                 9...10 => TileType::Sand,
@@ -49,7 +48,7 @@ pub fn generate_map(width: usize, height: usize) -> Map {
                 _ => TileType::Grass,
             };
             let walkable = tile_type.walkable();
-            let tile = Tile {
+            let mut tile = Tile {
                 x,
                 y,
                 _type: tile_type,
@@ -75,7 +74,6 @@ pub fn generate_map(width: usize, height: usize) -> Map {
 /// all the subtiles of a Tile to check if one is not walkable.
 /// If so, the whole tile won't be.
 fn is_walkable(x: usize, y: usize) -> bool {
-    let mut walkable = true;
     let tile = MAP
         .content
         .get(&format!("{};{}", x, y))
