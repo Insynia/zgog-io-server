@@ -16,14 +16,16 @@ pub struct Player {
     pub orientation: Coords,
     pub velocity: Coords,
     pub inventory: Inventory,
+    pub hitting: bool,
 }
 
 /// Player coords struct
 #[derive(Serialize, Deserialize)]
-pub struct PlayerCoords {
+pub struct PlayerState {
     pub position: Coords,
     pub orientation: Coords,
     pub velocity: Coords,
+    pub hitting: bool,
 }
 
 /// NewPlyerInfos struct
@@ -46,6 +48,7 @@ pub fn add_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<Player
                 orientation: Coords::default(),
                 velocity: Coords::default(),
                 inventory: Inventory::default(),
+                hitting: false,
             };
 
             PLAYERS
@@ -72,7 +75,7 @@ pub fn remove_player(id: Uuid) {
 
 pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<(), String> {
     if let Some(payload) = payload {
-        if let Ok(coords) = serde_json::from_value::<PlayerCoords>(payload) {
+        if let Ok(state) = serde_json::from_value::<PlayerState>(payload) {
             if let Some(ref mut player) = PLAYERS
                 .write()
                 .expect("Could not lock players mutex")
@@ -81,12 +84,13 @@ pub fn move_player(id: Uuid, payload: Option<serde_json::Value>) -> Result<(), S
                 .collect::<Vec<_>>()
                 .first_mut()
             {
-                player.position.x = coords.position.x;
-                player.position.y = coords.position.y;
-                player.orientation.x = coords.orientation.x;
-                player.orientation.y = coords.orientation.y;
-                player.velocity.x = coords.velocity.x;
-                player.velocity.y = coords.velocity.y;
+                player.position.x = state.position.x;
+                player.position.y = state.position.y;
+                player.orientation.x = state.orientation.x;
+                player.orientation.y = state.orientation.y;
+                player.velocity.x = state.velocity.x;
+                player.velocity.y = state.velocity.y;
+                player.hitting = state.hitting;
 
                 Ok(())
             } else {
