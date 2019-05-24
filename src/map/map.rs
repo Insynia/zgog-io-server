@@ -6,8 +6,7 @@ use rand::Rng;
 use std::collections::HashMap;
 
 use crate::coordinates::Coords;
-use crate::map::map_object::{MapObject, MapObjectType};
-use crate::map::tiles::{Tile, TileType};
+use crate::map::{Object, ObjectType, Visual, VisualType};
 
 lazy_static! {
     pub static ref MAP: Map = generate_map(30, 30);
@@ -21,12 +20,24 @@ static MAP_OBJECTS_SPACING: usize = 30;
 /// and the content is a [HashMap](HashMap) containing all the squares.
 /// Each square of the map is accessible through the key `x;y`, `x` and
 /// `y` being the coordinates of the tile. The value is then a vector of
-/// [Tile](Tile) which represent each element present on the square.
+/// [Tile](Tile) which represent the collection of elements present on the square.
 #[derive(Debug, Serialize, Clone)]
 pub struct Map {
     pub width: usize,
     pub height: usize,
     content: HashMap<String, Tile>,
+}
+
+/// Collection of elements present at a x/y position.
+/// These elements can either be visuals or objects (player can't walk on objects)
+#[derive(Debug, Clone, Serialize)]
+pub struct Tile {
+    /// The x position of the tile on the map.
+    pub x: usize,
+    /// The y position of the tile on the map.
+    pub y: usize,
+    pub objects: Vec<Object>,
+    pub visuals: Vec<Visual>,
 }
 
 /// Generate a map of a size provided in parameters.
@@ -48,25 +59,27 @@ pub fn generate_map(width: usize, height: usize) -> Map {
                 ((noise_generator.get([x as f64 / 20.0, y as f64 / 20.0]) + 1.0) * 10.0) as u32;
             let key = format!("{};{}", x, y);
             let tile_type = match depth {
-                5...9 => TileType::Water,
-                9...10 => TileType::Sand,
-                10...15 => TileType::Grass,
-                _ => TileType::Grass,
+                5...9 => VisualType::Water,
+                9...10 => VisualType::Sand,
+                10...15 => VisualType::Grass,
+                _ => VisualType::Grass,
             };
-            let walkable = tile_type.walkable();
+
             let mut tile = Tile {
                 x,
                 y,
-                _type: tile_type,
                 objects: vec![],
-                visuals: vec![],
+                visuals: vec![Visual {
+                    size: random.gen_range(1, 5 + 1),
+                    _type: tile_type,
+                }],
             };
 
-            if walkable && random.gen_range(0, MAP_OBJECTS_SPACING) == 0 {
-                tile.objects.push(MapObject {
+            if random.gen_range(0, MAP_OBJECTS_SPACING) == 0 {
+                tile.objects.push(Object {
                     _type: match random.gen_range(1, 3 + 1) {
-                        0 => MapObjectType::Rock,
-                        _ => MapObjectType::Tree,
+                        0 => ObjectType::Rock,
+                        _ => ObjectType::Tree,
                     },
                     size: random.gen_range(1, 5 + 1),
                 });
@@ -87,7 +100,7 @@ fn is_walkable(x: usize, y: usize) -> bool {
         .get(&format!("{};{}", x, y))
         .expect("Tile not found");
 
-    tile.walkable()
+    tile.objects.len() == 0
 }
 
 /// Returns valid coordinates to spawn a player (walkable tile).

@@ -1,13 +1,13 @@
 #[derive(Serialize_repr, Deserialize, Debug, Clone)]
 #[repr(u8)]
-pub enum MapObjectType {
+pub enum ObjectType {
     Tree,
     Rock,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MapObject {
+pub struct Object {
     #[serde(rename = "type")]
-    pub _type: MapObjectType,
+    pub _type: ObjectType,
     pub size: usize,
 }
