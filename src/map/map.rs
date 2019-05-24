@@ -9,6 +9,7 @@ use crate::coordinates::Coords;
 use crate::map::{Object, ObjectType, Visual, VisualType};
 
 lazy_static! {
+    /// The game map
     pub static ref MAP: Map = generate_map(30, 30);
 }
 
@@ -36,7 +37,9 @@ pub struct Tile {
     pub x: usize,
     /// The y position of the tile on the map.
     pub y: usize,
+    /// The objects present on the tile (rock, tree, loot...)
     pub objects: Vec<Object>,
+    /// The objects present on the tile (grass, water, flower...)
     pub visuals: Vec<Visual>,
 }
 

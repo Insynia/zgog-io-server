@@ -6,6 +6,8 @@ pub enum VisualType {
     Grass,
 }
 
+/// Represents a map visual. It can either be a base tile such as
+/// grass/water and or decorations such as flowers.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Visual {
     #[serde(rename = "type")]

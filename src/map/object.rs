@@ -5,6 +5,8 @@ pub enum ObjectType {
     Rock,
 }
 
+/// Represents an object. It can either be a "map object" such as
+/// tree/rock or other things like loot. These should not be walkable.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Object {
     #[serde(rename = "type")]

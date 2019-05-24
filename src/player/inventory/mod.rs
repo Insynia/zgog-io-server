@@ -1,3 +1,4 @@
+/// Represents a character's inventory.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Inventory {
     stone: usize,

@@ -10,8 +10,10 @@ use crate::communication::{IncomingMessage, IncomingMessageType, OutgoingMessage
 use crate::map::send_map;
 use crate::player::{add_player, move_player, remove_player, send_all_players, send_hero, PLAYERS};
 
+/// The IP the server will be bound to.
 static SERVER_IP: &str = "0.0.0.0:2794";
 
+/// Handler for game messages only.
 fn handle_game_message(id: Uuid, message: &OwnedMessage) -> Result<(), String> {
     if let OwnedMessage::Text(str_message) = message {
         if let Ok(message) = serde_json::from_str::<IncomingMessage<serde_json::Value>>(str_message)
@@ -40,6 +42,7 @@ fn handle_game_message(id: Uuid, message: &OwnedMessage) -> Result<(), String> {
     Ok(())
 }
 
+/// Handler for all messages.
 fn handle_message(id: Uuid, message: OwnedMessage) -> bool {
     match message {
         OwnedMessage::Close(_) => {
@@ -63,7 +66,7 @@ fn handle_message(id: Uuid, message: OwnedMessage) -> bool {
     }
 }
 
-/// Delay to send coordinates of players in ms
+/// Delay to send coordinates of players in ms.
 static SEND_COORDS_DELAY: u64 = 100;
 
 /// Launches the game server.

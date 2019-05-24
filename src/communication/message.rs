@@ -8,11 +8,11 @@ pub enum IncomingMessageType {
     /// Needs no payload.
     Map,
     /// Used to tell that a player just moved.
-    /// Must be provided alongside with a [PlayerCoords](crate::players::player::PlayerCoords)
+    /// Must be provided alongside with a [PlayerCoords](crate::player::PlayerCoords)
     /// struct as payload.
     PlayerCoords,
     /// Used to tell that a player just connected.
-    /// Must be provided alongside with a [NewPlayerInfos](crate::players::player::NewPlayerInfos)
+    /// Must be provided alongside with a [NewPlayerInfos](crate::player::NewPlayerInfos)
     /// struct as payload.
     NewPlayer,
 }
@@ -25,17 +25,17 @@ pub enum OutgoingMessageType {
     /// Must be provided alongside with a [Map](crate::map::Map) struct as payload.
     Map,
     /// Used to send the hero's informations.
-    /// Must be provided alongside with a [Player](crate::players::Player) struct as payload.
+    /// Must be provided alongside with a [Player](crate::player::Player) struct as payload.
     Hero,
     /// Used to tell that a new player just connected.
-    /// Must be provided alongside with a [Player](crate::players::Player) struct as payload.
+    /// Must be provided alongside with a [Player](crate::player::Player) struct as payload.
     NewPlayer,
     /// Used to send all player's informations.
-    /// Must be provided alongside with a vector of [Player](crate::players::Player) structs
+    /// Must be provided alongside with a vector of [Player](crate::player::Player) structs
     /// as payload.
     AllPlayers,
     /// Used to send a player's update.
-    /// Must be provided alongside with a [Player](crate::players::Player) struct as payload.
+    /// Must be provided alongside with a [Player](crate::player::Player) struct as payload.
     PlayerUpdated,
 }
 
