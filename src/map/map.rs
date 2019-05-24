@@ -100,7 +100,7 @@ fn is_walkable(x: usize, y: usize) -> bool {
         .get(&format!("{};{}", x, y))
         .expect("Tile not found");
 
-    tile.objects.len() == 0
+    tile.objects.len() == 0 && tile.visuals.iter().all(|v| v._type != VisualType::Water)
 }
 
 /// Returns valid coordinates to spawn a player (walkable tile).

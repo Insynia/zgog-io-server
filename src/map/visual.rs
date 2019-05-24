@@ -1,4 +1,4 @@
-#[derive(Serialize_repr, Deserialize, Debug, Clone)]
+#[derive(Serialize_repr, Deserialize, Debug, Clone, PartialEq)]
 #[repr(u8)]
 pub enum VisualType {
     Water,
